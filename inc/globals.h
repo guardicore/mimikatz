@@ -83,6 +83,7 @@ DWORD MIMIKATZ_NT_MAJOR_VERSION, MIMIKATZ_NT_MINOR_VERSION, MIMIKATZ_NT_BUILD_NU
 #define SIZE_ALIGN(size, alignment)	(size + ((size % alignment) ? (alignment - (size % alignment)) : 0))
 #define KIWI_NEVERTIME(filetime)	(*(PLONGLONG) filetime = MAXLONGLONG)
 
+#define WINDOWS_MAX_USERNAME_PASS_LENGTH (257)
 #define LM_NTLM_HASH_LENGTH	16
 
 #define KULL_M_WIN_BUILD_XP		2600
