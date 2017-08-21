@@ -528,4 +528,7 @@
       <UniqueIdentifier>{de3bf270-ef33-4d83-bec2-77c4450b411a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
 </Project>

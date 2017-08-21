@@ -47,11 +47,3 @@ NTSTATUS mimikatz_initOrClean(BOOL Init);
 
 NTSTATUS mimikatz_doLocal(wchar_t * input);
 NTSTATUS mimikatz_dispatchCommand(wchar_t * input);
-
-#ifdef _M_X64
-#pragma comment(linker, "/export:collect=collectEntries")
-#pragma comment(linker, "/export:get=getEntry")
-#elif defined _M_IX86
-#pragma comment(linker, "/export:collect=_collectEntries@16")
-#pragma comment(linker, "/export:get=_getEntry@16")
-#endif
