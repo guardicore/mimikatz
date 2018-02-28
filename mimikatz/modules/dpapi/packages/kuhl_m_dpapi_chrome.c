@@ -40,7 +40,7 @@ NTSTATUS kuhl_m_dpapi_chrome(int argc, wchar_t * argv[])
 									sqlite3_column_bytes(pStmt, 2), sqlite3_column_text(pStmt, 2));
 								if(kuhl_m_dpapi_unprotect_raw_or_blob(sqlite3_column_blob(pStmt, 3), sqlite3_column_bytes(pStmt, 3), NULL, argc, argv, NULL, 0, &pDataOut, &dwDataOutLen, NULL))
 								{
-									kprintf(L"Password: %s\n", hide_secret(pDataOut, dwDataOutLen));
+									kprintf(L"Password: %.*S\n", dwDataOutLen, pDataOut);
 									LocalFree(pDataOut);
 								}
 							}

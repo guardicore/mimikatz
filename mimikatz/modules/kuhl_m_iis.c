@@ -89,7 +89,7 @@ void kuhl_m_iis_apphost_apppool(int argc, wchar_t * argv[], IXMLDOMDocument *pXM
 				LocalFree(gen);
 				if(gen = kull_m_xml_getAttribute(pProcessModelNode, L"password"))
 				{
-					kprintf(L"  Password: %s\n", hide_secret_str(gen));
+					kprintf(L"  Password: %s\n", gen);
 					kuhl_m_iis_maybeEncrypted(argc, argv, pXMLDom, gen);
 					LocalFree(gen);
 				}
@@ -153,7 +153,7 @@ void kuhl_m_iis_apphost_site(int argc, wchar_t * argv[], IXMLDOMDocument *pXMLDo
 															LocalFree(gen);
 															if(gen = kull_m_xml_getAttribute(pVdirNode, L"password"))
 															{
-																kprintf(L"      Password: %s\n", hide_secret_str(gen));
+																kprintf(L"      Password: %s\n", gen);
 																kuhl_m_iis_maybeEncrypted(argc, argv, pXMLDom, gen);
 																LocalFree(gen);
 															}

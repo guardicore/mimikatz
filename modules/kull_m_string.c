@@ -5,11 +5,6 @@
 */
 #include "kull_m_string.h"
 
-#include <windows.h>
-#include <Wincrypt.h>
-
-#define MD5LEN  16
-
 //BOOL kull_m_string_suspectUnicodeStringStructure(IN PUNICODE_STRING pUnicodeString)
 //{
 //	return (
@@ -137,104 +132,6 @@ PCWCHAR WPRINTF_TYPES[] =
 	L"0x%02x, ",	// WPRINTF_HEX_C
 	L"\\x%02x",		// WPRINTF_HEX_PYTHON
 };
-
-
-BOOL md5(LPCVOID data, DWORD len, BYTE hash[MD5LEN]) {
-	BOOL ret = FALSE;
-	HCRYPTPROV hProv = 0;
-	HCRYPTHASH hHash = 0;
-
-	DWORD hash_len = 0;
-
-	// Get handle to the crypto provider
-	if (!CryptAcquireContext(&hProv,
-		NULL,
-		NULL,
-		PROV_RSA_FULL,
-		CRYPT_VERIFYCONTEXT))
-	{
-		goto error2;
-	}
-
-	if (!CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash)) {
-		goto error1;
-	}
-
-	if (!CryptHashData(hHash, data, len, 0)) {
-		goto error;
-	}
-
-	hash_len = MD5LEN;
-	if (!CryptGetHashParam(hHash, HP_HASHVAL, hash, &hash_len, 0)) {
-		goto error;
-	}
-
-	ret = TRUE;
-
-error:
-	CryptDestroyHash(hHash);
-error1:
-	CryptReleaseContext(hProv, 0);
-error2:
-
-	return ret;
-}
-
-#pragma warning (disable: 4996)
-
-wchar_t* hide_secret_str(PCWSTR lpData) {
-	DWORD len = 0;
-	if (lpData != NULL) {
-		len = (DWORD) wcslen(lpData);
-	}
-
-	return hide_secret(lpData, len);
-}
-
-wchar_t* hide_secret(LPCVOID lpData, DWORD cbData) {
-	static wchar_t buffer[0xffff];
-	memset(buffer, 0, sizeof(buffer));
-
-	wchar_t* hashed = buffer;
-
-
-	hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" [hashed secret] ");
-
-	if ((lpData == NULL) || (cbData == 0)) {
-		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" empty ");
-		return buffer;
-	}
-
-	BYTE hash[MD5LEN] = { 0 };
-
-	if (!md5(lpData, cbData, hash)) {
-		PRINT_ERROR("Error calc md5");
-		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" error-calc-md5 ");
-		return buffer;
-	}
-
-	WCHAR rgbDigits[] = L"0123456789abcdef";
-	for (DWORD i = 0; i < MD5LEN; i++)
-	{
-		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L"%c%c", rgbDigits[hash[i] >> 4],
-			rgbDigits[hash[i] & 0xf]);
-	}
-
-	return buffer;
-}
-
-void print_secret(LPCVOID lpData, DWORD cbData, DWORD flags) {
-	kprintf(hide_secret(lpData, cbData));
-}
-
-void print_secret_guid(LPCGUID guid) {
-	DWORD len = 0;
-	if (guid != NULL) {
-		len = sizeof(*guid);
-	}
-
-	print_secret(guid, len, 0);
-}
 
 void kull_m_string_wprintf_hex(LPCVOID lpData, DWORD cbData, DWORD flags)
 {

@@ -955,15 +955,15 @@ NTSTATUS kuhl_m_crypto_hash(int argc, wchar_t * argv[])
 	RtlInitUnicodeString(&uUsername, szUsername);
 	if(NT_SUCCESS(RtlDigestNTLM(&uPassword, hash)))
 	{
-		kprintf(L"NTLM: "); print_secret(hash, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+		kprintf(L"NTLM: "); kull_m_string_wprintf_hex(hash, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 		if(szUsername)
 		{
 			if(NT_SUCCESS(kull_m_crypto_get_dcc(dcc, hash, &uUsername, 0)))
 			{
-				kprintf(L"DCC1: "); print_secret(dcc, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+				kprintf(L"DCC1: "); kull_m_string_wprintf_hex(dcc, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 				if(NT_SUCCESS(kull_m_crypto_get_dcc(dcc, hash, &uUsername, count)))
 				{
-					kprintf(L"DCC2: "); print_secret(dcc, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+					kprintf(L"DCC2: "); kull_m_string_wprintf_hex(dcc, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 				}
 			}
 		}
@@ -986,17 +986,17 @@ NTSTATUS kuhl_m_crypto_hash(int argc, wchar_t * argv[])
 	{
 		if(NT_SUCCESS(RtlDigestLM(oTmp.Buffer, hash)))
 		{
-			kprintf(L"LM  : "); print_secret(hash, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+			kprintf(L"LM  : "); kull_m_string_wprintf_hex(hash, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 		}
 		RtlFreeOemString(&oTmp);
 	}
 
 	if(kull_m_crypto_hash(CALG_MD5, uPassword.Buffer, uPassword.Length, md5, MD5_DIGEST_LENGTH))
-		kprintf(L"MD5 : "); print_secret(md5, MD5_DIGEST_LENGTH, 0); kprintf(L"\n");
+		kprintf(L"MD5 : "); kull_m_string_wprintf_hex(md5, MD5_DIGEST_LENGTH, 0); kprintf(L"\n");
 	if(kull_m_crypto_hash(CALG_SHA1, uPassword.Buffer, uPassword.Length, sha1, SHA_DIGEST_LENGTH))
-		kprintf(L"SHA1: "); print_secret(sha1, SHA_DIGEST_LENGTH, 0); kprintf(L"\n");
+		kprintf(L"SHA1: "); kull_m_string_wprintf_hex(sha1, SHA_DIGEST_LENGTH, 0); kprintf(L"\n");
 	if(kull_m_crypto_hash(CALG_SHA_256, uPassword.Buffer, uPassword.Length, sha2, 32))
-		kprintf(L"SHA2: "); print_secret(sha2, 32, 0); kprintf(L"\n");
+		kprintf(L"SHA2: "); kull_m_string_wprintf_hex(sha2, 32, 0); kprintf(L"\n");
 
 	return STATUS_SUCCESS;
 }

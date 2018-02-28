@@ -205,17 +205,6 @@ size_t WINAPI collectEntries()
 		s_list = NULL;
 	}
 
-	static wchar_t buffer[0xffff];
-	memset(buffer, 0, sizeof(buffer));
-	
-	outputBufferElements = sizeof(buffer) / sizeof(buffer[0]);
-	outputBufferElementsPosition = 0;
-	outputBuffer = buffer;
-
-	if (!outputBuffer) {
-		return 0;
-	}
-
 	s_list = List_create();
 	mimikatz_begin();
 	mimikatz_dispatchCommand(L"privilege::debug");
@@ -228,11 +217,6 @@ size_t WINAPI collectEntries()
 LogonData WINAPI getEntry()
 {
 	return List_pop(s_list);
-}
-
-wchar_t* WINAPI getTextOutput()
-{
-	return outputBuffer;
 }
 
 FARPROC WINAPI delayHookFailureFunc (unsigned int dliNotify, PDelayLoadInfo pdli)
