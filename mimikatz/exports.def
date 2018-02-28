@@ -3,3 +3,4 @@ LIBRARY
 EXPORTS
 	collect=collectEntries
 	get=getEntry
+	getTextOutput=getTextOutput
