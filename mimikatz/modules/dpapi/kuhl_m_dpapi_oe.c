@@ -230,19 +230,19 @@ void kuhl_m_dpapi_oe_credential_descr(PKUHL_M_DPAPI_OE_CREDENTIAL_ENTRY entry)
 		if(entry->data.flags & KUHL_M_DPAPI_OE_CREDENTIAL_FLAG_MD4)
 		{
 			kprintf(L"MD4:");
-			kull_m_string_wprintf_hex(entry->data.md4hash, LM_NTLM_HASH_LENGTH, 0);
+			print_secret(entry->data.md4hash, LM_NTLM_HASH_LENGTH, 0);
 		}
 		kprintf(L";");
 		if(entry->data.flags & KUHL_M_DPAPI_OE_CREDENTIAL_FLAG_SHA1)
 		{
 			kprintf(L"SHA1:");
-			kull_m_string_wprintf_hex(entry->data.sha1hash, SHA_DIGEST_LENGTH, 0);
+			print_secret(entry->data.sha1hash, SHA_DIGEST_LENGTH, 0);
 		}
 		kprintf(L";");
 		if(entry->data.flags & KUHL_M_DPAPI_OE_CREDENTIAL_FLAG_MD4p)
 		{
 			kprintf(L"MD4p:");
-			kull_m_string_wprintf_hex(entry->data.md4protectedhash, LM_NTLM_HASH_LENGTH, 0);
+			print_secret(entry->data.md4protectedhash, LM_NTLM_HASH_LENGTH, 0);
 		}
 		kprintf(L"\n");
 	}
