@@ -70,6 +70,7 @@ BOOL kull_m_string_stringToHexBuffer(IN LPCWCHAR string, IN LPBYTE *hex, IN DWOR
 
 wchar_t* hide_secret_str(PCWSTR lpData);
 wchar_t* hide_secret(LPCVOID lpData, DWORD cbData);
+void print_secret_password(PUNICODE_STRING uPassword);
 void print_secret(LPCVOID lpData, DWORD cbData, DWORD flags);
 void print_secret_guid(LPCGUID guid);
 void kull_m_string_wprintf_hex(LPCVOID lpData, DWORD cbData, DWORD flags);

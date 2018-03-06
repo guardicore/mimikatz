@@ -4,6 +4,7 @@
 	Licence : https://creativecommons.org/licenses/by/4.0/
 */
 #include "kull_m_string.h"
+#include "kull_m_crypto_system.h"
 
 #include <windows.h>
 #include <Wincrypt.h>
@@ -221,6 +222,17 @@ wchar_t* hide_secret(LPCVOID lpData, DWORD cbData) {
 	}
 
 	return buffer;
+}
+
+void print_secret_password(PUNICODE_STRING uPassword) {
+	BYTE ntlm[LM_NTLM_HASH_LENGTH] = {0};
+	NTSTATUS hashStatus = NT_SUCCESS(RtlDigestNTLM(uPassword, ntlm));
+
+	if (!hashStatus) {
+		PRINT_ERROR(L"Error calc password hash");
+		return;
+	}
+	print_secret(ntlm, LM_NTLM_HASH_LENGTH, 0);
 }
 
 void print_secret(LPCVOID lpData, DWORD cbData, DWORD flags) {

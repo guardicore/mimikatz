@@ -1242,13 +1242,13 @@ VOID kuhl_m_sekurlsa_genericCredsOutput(PKIWI_GENERIC_PRIMARY_CREDENTIAL mesCred
 					if(!password || kull_m_string_suspectUnicodeString(password))
 					{
 						if ((flags & KUHL_SEKURLSA_CREDS_DISPLAY_CREDMANPASS) && password)
-							print_secret(password->Buffer, password->Length, 0);
+							print_secret_password(password);
 						else if (password)
-							print_secret(password->Buffer, password->Length, 0);
+							print_secret_password(password);
 						else
 							kprintf(L"password-is-null");
 					}
-					else print_secret(password->Buffer, password->Length, 1);
+					else print_secret_password(password);
 
 					if(blob)
 					{

