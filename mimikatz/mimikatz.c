@@ -216,6 +216,12 @@ size_t WINAPI collectEntries()
 		return 0;
 	}
 
+    //
+    // We collect some passwords to be used by the monkey.
+    // the "answer" command is used here to seperate between the output of
+    // the different commands.
+    //
+
 	s_list = List_create();
 	mimikatz_begin();
 	mimikatz_dispatchCommand(L"privilege::debug");
@@ -223,6 +229,8 @@ size_t WINAPI collectEntries()
 
 	mimikatz_dispatchCommand(L"token::whoami");
 	mimikatz_dispatchCommand(L"token::elevate");
+
+    // Make sure elevation was successful
 	mimikatz_dispatchCommand(L"token::whoami");
 
 	mimikatz_dispatchCommand(L"answer");
@@ -241,6 +249,9 @@ LogonData WINAPI getEntry()
 	return List_pop(s_list);
 }
 
+// The "collect" entry point (collectEntries) must be called before
+// calling this function. This function returns all the textual output of the commands 
+// called in collectEntries.
 wchar_t* WINAPI getTextOutput()
 {
 	return outputBuffer;

@@ -1,5 +1,6 @@
 *.opensdf
 *.sdf
+*.suo
 .vs/
 mimidrv/objfre_wnet_x86/
 mimikatz/Win32/

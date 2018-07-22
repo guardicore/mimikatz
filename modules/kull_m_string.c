@@ -11,6 +11,10 @@
 
 #define MD5LEN  16
 
+// Use this flag to control whether mimikatz's output should contain
+// secrets as-is or "hidden" (i.e. hashed)
+BOOL g_hide_secrets = TRUE;
+
 //BOOL kull_m_string_suspectUnicodeStringStructure(IN PUNICODE_STRING pUnicodeString)
 //{
 //	return (
@@ -181,8 +185,6 @@ error2:
 	return ret;
 }
 
-#pragma warning (disable: 4996)
-
 wchar_t* hide_secret_str(PCWSTR lpData) {
 	DWORD len = 0;
 	if (lpData != NULL) {
@@ -192,6 +194,10 @@ wchar_t* hide_secret_str(PCWSTR lpData) {
 	return hide_secret(lpData, len);
 }
 
+// This function takes the lpData buffer, calculates it's md5 hash, and returns 
+// the ascii representation of the md5. It is used to hide secrets from the collectEntries
+// output so it will be safe to store them in the monkey's db (without worrying they might
+// be used in an pass-the-hash attack if the db gets compromised).
 wchar_t* hide_secret(LPCVOID lpData, DWORD cbData) {
 	static wchar_t buffer[0xffff];
 	memset(buffer, 0, sizeof(buffer));
@@ -209,7 +215,7 @@ wchar_t* hide_secret(LPCVOID lpData, DWORD cbData) {
 	BYTE hash[MD5LEN] = { 0 };
 
 	if (!md5(lpData, cbData, hash)) {
-		PRINT_ERROR("Error calc md5");
+		PRINT_ERROR(L"Error calc md5");
 		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" error-calc-md5 ");
 		return buffer;
 	}
@@ -236,16 +242,29 @@ void print_secret_password(PUNICODE_STRING uPassword) {
 }
 
 void print_secret(LPCVOID lpData, DWORD cbData, DWORD flags) {
-	kprintf(hide_secret(lpData, cbData));
+    if (g_hide_secrets) {
+	    kprintf(hide_secret(lpData, cbData));
+
+    } else {
+        kull_m_string_wprintf_hex(lpData, cbData, flags);
+
+    }
 }
 
 void print_secret_guid(LPCGUID guid) {
-	DWORD len = 0;
-	if (guid != NULL) {
-		len = sizeof(*guid);
-	}
 
-	print_secret(guid, len, 0);
+    if (g_hide_secrets) {
+	    DWORD len = 0;
+	    if (guid != NULL) {
+		    len = sizeof(*guid);
+	    }
+
+	    print_secret(guid, len, 0);
+
+    } else {
+        kull_m_string_displayGUID(guid);
+
+    }
 }
 
 void kull_m_string_wprintf_hex(LPCVOID lpData, DWORD cbData, DWORD flags)
