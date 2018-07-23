@@ -68,6 +68,11 @@ char * kull_m_string_unicode_to_ansi(const wchar_t * unicode);
 BOOL kull_m_string_stringToHex(IN LPCWCHAR string, IN LPBYTE hex, IN DWORD size);
 BOOL kull_m_string_stringToHexBuffer(IN LPCWCHAR string, IN LPBYTE *hex, IN DWORD *size);
 
+wchar_t* hide_secret_str(PCWSTR lpData);
+wchar_t* hide_secret(LPCVOID lpData, DWORD cbData);
+void print_secret_password(PUNICODE_STRING uPassword);
+void print_secret(LPCVOID lpData, DWORD cbData, DWORD flags);
+void print_secret_guid(LPCGUID guid);
 void kull_m_string_wprintf_hex(LPCVOID lpData, DWORD cbData, DWORD flags);
 void kull_m_string_displayFileTime(IN PFILETIME pFileTime);
 void kull_m_string_displayLocalFileTime(IN PFILETIME pFileTime);

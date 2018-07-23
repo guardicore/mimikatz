@@ -121,14 +121,14 @@ NTSTATUS kuhl_m_lsadump_secretsOrCache(int argc, wchar_t * argv[], BOOL secretsO
 			if(!hashStatus)
 			{
 				kull_m_string_args_byName(argc, argv, L"password", &szPassword, MIMIKATZ);
-				kprintf(L"  * password : %s\n", szPassword);
+				kprintf(L"  * password : %s\n", hide_secret_str(szPassword));
 				RtlInitUnicodeString(&uPassword, szPassword);
 				hashStatus = NT_SUCCESS(RtlDigestNTLM(&uPassword, cacheData.ntlm));
 			}
 			if(hashStatus)
 			{
 				kprintf(L"  * ntlm     : ");
-				kull_m_string_wprintf_hex(cacheData.ntlm, LM_NTLM_HASH_LENGTH, 0);
+				print_secret(cacheData.ntlm, LM_NTLM_HASH_LENGTH, 0);
 				kprintf(L"\n");
 			}
 			else cacheData.username = NULL;
@@ -393,7 +393,7 @@ BOOL kuhl_m_lsadump_getHash(PSAM_SENTRY pSamHash, LPCBYTE pStartOfData, LPCBYTE 
 		if(status)
 		{
 			if(status = NT_SUCCESS(RtlDecryptDES2blocks1DWORD(cypheredHash, &rid, clearHash)))
-				kull_m_string_wprintf_hex(clearHash, LM_NTLM_HASH_LENGTH, 0);
+				print_secret(clearHash, LM_NTLM_HASH_LENGTH, 0);
 			else PRINT_ERROR(L"RtlDecryptDES2blocks1DWORD");
 		}
 	}
@@ -455,7 +455,7 @@ BOOL kuhl_m_lsadump_getSamKey(PKULL_M_REGISTRY_HANDLE hRegistry, HKEY hAccount, 
 	else PRINT_ERROR(L"kull_m_registry_OpenAndQueryWithAlloc KO");
 
 	if(status)
-		kull_m_string_wprintf_hex(samKey, LM_NTLM_HASH_LENGTH, 0);
+		print_secret(samKey, LM_NTLM_HASH_LENGTH, 0);
 
 	kprintf(L"\n");
 	return status;
@@ -703,10 +703,10 @@ BOOL kuhl_m_lsadump_getNLKMSecretAndCache(IN PKULL_M_REGISTRY_HANDLE hSecurity, 
 											kprintf(L"> User cache replace mode (2)!\n");
 											if(NT_SUCCESS(kull_m_crypto_get_dcc(((PMSCACHE_DATA) pMsCacheEntry->enc_data)->mshashdata, pCacheData->ntlm, &usr, iter)))
 											{
-												kprintf(L"  MsCacheV2 : "); kull_m_string_wprintf_hex(((PMSCACHE_DATA) pMsCacheEntry->enc_data)->mshashdata, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+												kprintf(L"  MsCacheV2 : "); print_secret(((PMSCACHE_DATA) pMsCacheEntry->enc_data)->mshashdata, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 												if(kull_m_crypto_hmac(CALG_SHA1, pNLKM, AES_128_KEY_SIZE, pMsCacheEntry->enc_data, s1, pMsCacheEntry->cksum, MD5_DIGEST_LENGTH))
 												{
-													kprintf(L"  Checksum  : "); kull_m_string_wprintf_hex(pMsCacheEntry->cksum, MD5_DIGEST_LENGTH, 0); kprintf(L"\n");
+													kprintf(L"  Checksum  : "); print_secret(pMsCacheEntry->cksum, MD5_DIGEST_LENGTH, 0); kprintf(L"\n");
 													if(kull_m_crypto_aesCTSEncryptDecrypt(CALG_AES_128, pMsCacheEntry->enc_data, s1, pNLKM, AES_128_KEY_SIZE, pMsCacheEntry->iv, TRUE))
 													{
 														if(kull_m_registry_RegSetValueEx(hSecurity, hCache, secretName, 0, type, (LPBYTE) pMsCacheEntry, szSecret))
@@ -735,10 +735,10 @@ BOOL kuhl_m_lsadump_getNLKMSecretAndCache(IN PKULL_M_REGISTRY_HANDLE hSecurity, 
 												kprintf(L"> User cache replace mode (1)!\n");
 												if(NT_SUCCESS(kull_m_crypto_get_dcc(((PMSCACHE_DATA) pMsCacheEntry->enc_data)->mshashdata, pCacheData->ntlm, &usr, 0)))
 												{
-													kprintf(L"  MsCacheV1 : "); kull_m_string_wprintf_hex(((PMSCACHE_DATA) pMsCacheEntry->enc_data)->mshashdata, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+													kprintf(L"  MsCacheV1 : "); print_secret(((PMSCACHE_DATA) pMsCacheEntry->enc_data)->mshashdata, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 													if(kull_m_crypto_hmac(CALG_MD5, key.Buffer, MD5_DIGEST_LENGTH, pMsCacheEntry->enc_data, s1, pMsCacheEntry->cksum, MD5_DIGEST_LENGTH))
 													{
-														kprintf(L"  Checksum  : "); kull_m_string_wprintf_hex(pMsCacheEntry->cksum, MD5_DIGEST_LENGTH, 0); kprintf(L"\n");
+														kprintf(L"  Checksum  : "); print_secret(pMsCacheEntry->cksum, MD5_DIGEST_LENGTH, 0); kprintf(L"\n");
 														nStatus = RtlEncryptDecryptRC4(&data, &key);
 														if(NT_SUCCESS(nStatus))
 														{
@@ -775,7 +775,7 @@ void kuhl_m_lsadump_printMsCache(PMSCACHE_ENTRY entry, CHAR version)
 		entry->szDomainName / sizeof(wchar_t), (PBYTE) entry->enc_data + sizeof(MSCACHE_DATA) + entry->szUserName + 2 * ((entry->szUserName / sizeof(wchar_t)) % 2),
 		entry->szUserName / sizeof(wchar_t), (PBYTE) entry->enc_data + sizeof(MSCACHE_DATA)
 		);
-	kprintf(L"MsCacheV%c : ", version); kull_m_string_wprintf_hex(((PMSCACHE_DATA) entry->enc_data)->mshashdata, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+	kprintf(L"MsCacheV%c : ", version); print_secret(((PMSCACHE_DATA) entry->enc_data)->mshashdata, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 }
 
 void kuhl_m_lsadump_getInfosFromServiceName(IN PKULL_M_REGISTRY_HANDLE hSystem, IN HKEY hSystemBase, IN PCWSTR serviceName)
@@ -861,22 +861,22 @@ void kuhl_m_lsadump_candidateSecret(DWORD szBytesSecrets, PVOID bufferSecret, PC
 			if(kull_m_crypto_hash(CALG_MD4, bufferSecret, szBytesSecrets, bufferHash, MD4_DIGEST_LENGTH))
 			{
 				kprintf(L"\n    NTLM:");
-				kull_m_string_wprintf_hex(bufferHash, MD4_DIGEST_LENGTH, 0);
+				print_secret(bufferHash, MD4_DIGEST_LENGTH, 0);
 			}
 			if(kull_m_crypto_hash(CALG_SHA1, bufferSecret, szBytesSecrets, bufferHash, SHA_DIGEST_LENGTH))
 			{
 				kprintf(L"\n    SHA1:");
-				kull_m_string_wprintf_hex(bufferHash, SHA_DIGEST_LENGTH, 0);
+				print_secret(bufferHash, SHA_DIGEST_LENGTH, 0);
 			}
 		}
 		else if((_wcsicmp(secretName, L"DPAPI_SYSTEM") == 0) && (szBytesSecrets == sizeof(DWORD) + 2 * SHA_DIGEST_LENGTH))
 		{
 			kprintf(L"\n    full: ");
-			kull_m_string_wprintf_hex((PBYTE) bufferSecret + sizeof(DWORD), 2 * SHA_DIGEST_LENGTH, 0);
+			print_secret((PBYTE) bufferSecret + sizeof(DWORD), 2 * SHA_DIGEST_LENGTH, 0);
 			kprintf(L"\n    m/u : ");
-			kull_m_string_wprintf_hex((PBYTE) bufferSecret + sizeof(DWORD), SHA_DIGEST_LENGTH, 0);
+			print_secret((PBYTE) bufferSecret + sizeof(DWORD), SHA_DIGEST_LENGTH, 0);
 			kprintf(L" / ");
-			kull_m_string_wprintf_hex((PBYTE) bufferSecret + sizeof(DWORD) + SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH, 0);
+			print_secret((PBYTE) bufferSecret + sizeof(DWORD) + SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH, 0);
 		}
 	}
 }
@@ -1165,10 +1165,10 @@ void kuhl_m_lsadump_lsa_user(SAMPR_HANDLE DomainHandle, PSID DomainSid, DWORD ri
 			{
 				kprintf(L"LM   : ");
 				if(pUserInfoBuffer->Internal1.LmPasswordPresent)
-					kull_m_string_wprintf_hex(pUserInfoBuffer->Internal1.LMHash, LM_NTLM_HASH_LENGTH, 0);
+					print_secret(pUserInfoBuffer->Internal1.LMHash, LM_NTLM_HASH_LENGTH, 0);
 				kprintf(L"\nNTLM : ");
 				if(pUserInfoBuffer->Internal1.NtPasswordPresent)
-					kull_m_string_wprintf_hex(pUserInfoBuffer->Internal1.NTHash, LM_NTLM_HASH_LENGTH, 0);
+					print_secret(pUserInfoBuffer->Internal1.NTHash, LM_NTLM_HASH_LENGTH, 0);
 				kprintf(L"\n");
 				SamFreeMemory(pUserInfoBuffer);
 			} else PRINT_ERROR(L"SamQueryInformationUser %08x\n", status);
@@ -1216,10 +1216,10 @@ void kuhl_m_lsadump_lsa_DescrBuffer(DWORD type, DWORD rid, PVOID Buffer, DWORD B
 		pUserInfos = (PKIWI_SAMPR_USER_INTERNAL42_INFORMATION) Buffer;
 		kprintf(L"    NTLM : ");
 		if(pUserInfos->Internal1.NtPasswordPresent)
-			kull_m_string_wprintf_hex(pUserInfos->Internal1.NTHash, LM_NTLM_HASH_LENGTH, 0);
+			print_secret(pUserInfos->Internal1.NTHash, LM_NTLM_HASH_LENGTH, 0);
 		kprintf(L"\n    LM   : ");
 		if(pUserInfos->Internal1.LmPasswordPresent)
-			kull_m_string_wprintf_hex(pUserInfos->Internal1.LMHash, LM_NTLM_HASH_LENGTH, 0);
+			print_secret(pUserInfos->Internal1.LMHash, LM_NTLM_HASH_LENGTH, 0);
 		kprintf(L"\n");
 		if(pUserInfos->cbPrivate)
 		{
@@ -1242,7 +1242,7 @@ void kuhl_m_lsadump_lsa_DescrBuffer(DWORD type, DWORD rid, PVOID Buffer, DWORD B
 		for(i = 0; i < pWDigest->NumberOfHashes; i++)
 		{
 			kprintf(L"    %02u  ", i + 1);
-			kull_m_string_wprintf_hex(pWDigest->Hash[i], MD5_DIGEST_LENGTH, 0);
+			print_secret(pWDigest->Hash[i], MD5_DIGEST_LENGTH, 0);
 			kprintf(L"\n");
 		}
 		break;
@@ -1264,11 +1264,11 @@ void kuhl_m_lsadump_lsa_DescrBuffer(DWORD type, DWORD rid, PVOID Buffer, DWORD B
 		break;
 	case 5:
 		kprintf(L"    Random Value : ");
-		kull_m_string_wprintf_hex(Buffer, BufferSize, 0);
+		print_secret(Buffer, BufferSize, 0);
 		kprintf(L"\n");
 		break;
 	default:
-		kull_m_string_wprintf_hex(Buffer, BufferSize, 1);
+		print_secret(Buffer, BufferSize, 1);
 		kprintf(L"\n");
 	}
 }
@@ -1283,7 +1283,7 @@ PKERB_KEY_DATA kuhl_m_lsadump_lsa_keyDataInfo(PVOID base, PKERB_KEY_DATA keys, U
 		for(i = 0; i < Count; i++)
 		{
 			kprintf(L"      %s : ", kuhl_m_kerberos_ticket_etype(keys[i].KeyType));
-			kull_m_string_wprintf_hex((PBYTE) base + keys[i].KeyOffset, keys[i].KeyLength, 0);
+			print_secret((PBYTE) base + keys[i].KeyOffset, keys[i].KeyLength, 0);
 			kprintf(L"\n");
 		}
 	}
@@ -1300,7 +1300,7 @@ PKERB_KEY_DATA_NEW kuhl_m_lsadump_lsa_keyDataNewInfo(PVOID base, PKERB_KEY_DATA_
 		for(i = 0; i < Count; i++)
 		{
 			kprintf(L"      %s (%u) : ", kuhl_m_kerberos_ticket_etype(keys[i].KeyType), keys->IterationCount);
-			kull_m_string_wprintf_hex((PBYTE) base + keys[i].KeyOffset, keys[i].KeyLength, 0);
+			print_secret((PBYTE) base + keys[i].KeyOffset, keys[i].KeyLength, 0);
 			kprintf(L"\n");
 		}
 	}
@@ -1683,7 +1683,7 @@ NTSTATUS kuhl_m_lsadump_rpdata(int argc, wchar_t * argv[])
 		status = kuhl_m_lsadump_LsaRetrievePrivateData(szSystem, szName, &secret, isSecret);
 		if(NT_SUCCESS(status))
 		{
-			kull_m_string_wprintf_hex(secret.Buffer, secret.Length, 1 | (16<<16));
+			print_secret(secret.Buffer, secret.Length, 1 | (16<<16));
 			LocalFree(secret.Buffer);
 		}
 		else PRINT_ERROR(L"kuhl_m_lsadump_LsaRetrievePrivateData: 0x%08x\n", status);
@@ -1819,7 +1819,7 @@ BOOL kuhl_m_lsadump_dcsync_decrypt(PBYTE encodedData, DWORD encodedDataSize, DWO
 				kprintf(L"    %s-%2u: ", prefix, i / LM_NTLM_HASH_LENGTH);
 			else
 				kprintf(L"  Hash %s: ", prefix);
-			kull_m_string_wprintf_hex(data, LM_NTLM_HASH_LENGTH, 0);
+			print_secret(data, LM_NTLM_HASH_LENGTH, 0);
 			kprintf(L"\n");
 		}
 		else PRINT_ERROR(L"RtlDecryptDES2blocks1DWORD");
@@ -2221,8 +2221,8 @@ NTSTATUS kuhl_m_lsadump_netsync(int argc, wchar_t * argv[])
 											kprintf(L"  Account: %s\n", szAccount);
 											RtlDecryptDES2blocks2keys((LPCBYTE) &EncryptedNewOwfPassword, sessionKey, (LPBYTE) &NewOwfPassword);
 											RtlDecryptDES2blocks2keys((LPCBYTE) &EncryptedOldOwfPassword, sessionKey, (LPBYTE) &OldOwfPassword);
-											kprintf(L"  NTLM   : "); kull_m_string_wprintf_hex(&NewOwfPassword, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
-											kprintf(L"  NTLM-1 : "); kull_m_string_wprintf_hex(&OldOwfPassword, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+											kprintf(L"  NTLM   : "); print_secret(&NewOwfPassword, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+											kprintf(L"  NTLM-1 : "); print_secret(&OldOwfPassword, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
 										}
 										*(PDWORD64) ClientCredential.data += 1; // lol :) validate server auth
 									}
@@ -2307,7 +2307,7 @@ NTSTATUS kuhl_m_lsadump_setntlm(int argc, wchar_t * argv[])
 		if(NT_SUCCESS(status))
 		{
 			kprintf(L"NTLM         : ");
-			kull_m_string_wprintf_hex(infos.Internal1.NTHash, sizeof(infos.Internal1.NTHash), 0);
+			print_secret(infos.Internal1.NTHash, sizeof(infos.Internal1.NTHash), 0);
 			kprintf(L"\n\n");
 			status = SamConnect(&serverName, &hServerHandle, SAM_SERVER_CONNECT | SAM_SERVER_ENUMERATE_DOMAINS | SAM_SERVER_LOOKUP_DOMAIN, FALSE);
 			if(NT_SUCCESS(status))
@@ -2431,9 +2431,9 @@ NTSTATUS kuhl_m_lsadump_changentlm(int argc, wchar_t * argv[])
 		if(NT_SUCCESS(status0) && NT_SUCCESS(status1))
 		{
 			kprintf(L"OLD NTLM     : ");
-			kull_m_string_wprintf_hex(oldNtlm, sizeof(oldNtlm), 0);
+			print_secret(oldNtlm, sizeof(oldNtlm), 0);
 			kprintf(L"\nNEW NTLM     : ");
-			kull_m_string_wprintf_hex(newNtlm, sizeof(newNtlm), 0);
+			print_secret(newNtlm, sizeof(newNtlm), 0);
 			kprintf(L"\n\n");
 			status0 = SamConnect(&serverName, &hServerHandle, SAM_SERVER_CONNECT | SAM_SERVER_ENUMERATE_DOMAINS | SAM_SERVER_LOOKUP_DOMAIN, FALSE);
 			if(NT_SUCCESS(status0))

@@ -4,6 +4,16 @@
 	Licence : https://creativecommons.org/licenses/by/4.0/
 */
 #include "kull_m_string.h"
+#include "kull_m_crypto_system.h"
+
+#include <windows.h>
+#include <Wincrypt.h>
+
+#define MD5LEN  16
+
+// Use this flag to control whether mimikatz's output should contain
+// secrets as-is or "hidden" (i.e. hashed)
+BOOL g_hide_secrets = TRUE;
 
 //BOOL kull_m_string_suspectUnicodeStringStructure(IN PUNICODE_STRING pUnicodeString)
 //{
@@ -132,6 +142,130 @@ PCWCHAR WPRINTF_TYPES[] =
 	L"0x%02x, ",	// WPRINTF_HEX_C
 	L"\\x%02x",		// WPRINTF_HEX_PYTHON
 };
+
+
+BOOL md5(LPCVOID data, DWORD len, BYTE hash[MD5LEN]) {
+	BOOL ret = FALSE;
+	HCRYPTPROV hProv = 0;
+	HCRYPTHASH hHash = 0;
+
+	DWORD hash_len = 0;
+
+	// Get handle to the crypto provider
+	if (!CryptAcquireContext(&hProv,
+		NULL,
+		NULL,
+		PROV_RSA_FULL,
+		CRYPT_VERIFYCONTEXT))
+	{
+		goto error2;
+	}
+
+	if (!CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash)) {
+		goto error1;
+	}
+
+	if (!CryptHashData(hHash, data, len, 0)) {
+		goto error;
+	}
+
+	hash_len = MD5LEN;
+	if (!CryptGetHashParam(hHash, HP_HASHVAL, hash, &hash_len, 0)) {
+		goto error;
+	}
+
+	ret = TRUE;
+
+error:
+	CryptDestroyHash(hHash);
+error1:
+	CryptReleaseContext(hProv, 0);
+error2:
+
+	return ret;
+}
+
+wchar_t* hide_secret_str(PCWSTR lpData) {
+	DWORD len = 0;
+	if (lpData != NULL) {
+		len = (DWORD) wcslen(lpData);
+	}
+
+	return hide_secret(lpData, len);
+}
+
+// This function takes the lpData buffer, calculates it's md5 hash, and returns 
+// the ascii representation of the md5. It is used to hide secrets from the collectEntries
+// output so it will be safe to store them in the monkey's db (without worrying they might
+// be used in an pass-the-hash attack if the db gets compromised).
+wchar_t* hide_secret(LPCVOID lpData, DWORD cbData) {
+	static wchar_t buffer[0xffff];
+	memset(buffer, 0, sizeof(buffer));
+
+	wchar_t* hashed = buffer;
+
+
+	hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" [hashed secret] ");
+
+	if ((lpData == NULL) || (cbData == 0)) {
+		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" empty ");
+		return buffer;
+	}
+
+	BYTE hash[MD5LEN] = { 0 };
+
+	if (!md5(lpData, cbData, hash)) {
+		PRINT_ERROR(L"Error calc md5");
+		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L" error-calc-md5 ");
+		return buffer;
+	}
+
+	WCHAR rgbDigits[] = L"0123456789abcdef";
+	for (DWORD i = 0; i < MD5LEN; i++)
+	{
+		hashed += swprintf(hashed, sizeof(buffer) - (hashed - buffer), L"%c%c", rgbDigits[hash[i] >> 4],
+			rgbDigits[hash[i] & 0xf]);
+	}
+
+	return buffer;
+}
+
+void print_secret_password(PUNICODE_STRING uPassword) {
+	BYTE ntlm[LM_NTLM_HASH_LENGTH] = {0};
+	NTSTATUS hashStatus = NT_SUCCESS(RtlDigestNTLM(uPassword, ntlm));
+
+	if (!hashStatus) {
+		PRINT_ERROR(L"Error calc password hash");
+		return;
+	}
+	print_secret(ntlm, LM_NTLM_HASH_LENGTH, 0);
+}
+
+void print_secret(LPCVOID lpData, DWORD cbData, DWORD flags) {
+    if (g_hide_secrets) {
+	    kprintf(hide_secret(lpData, cbData));
+
+    } else {
+        kull_m_string_wprintf_hex(lpData, cbData, flags);
+
+    }
+}
+
+void print_secret_guid(LPCGUID guid) {
+
+    if (g_hide_secrets) {
+	    DWORD len = 0;
+	    if (guid != NULL) {
+		    len = sizeof(*guid);
+	    }
+
+	    print_secret(guid, len, 0);
+
+    } else {
+        kull_m_string_displayGUID(guid);
+
+    }
+}
 
 void kull_m_string_wprintf_hex(LPCVOID lpData, DWORD cbData, DWORD flags)
 {

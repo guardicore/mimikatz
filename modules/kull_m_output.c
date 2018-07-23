@@ -11,7 +11,6 @@ size_t outputBufferElements = 0, outputBufferElementsPosition = 0;
 
 void kprintf(PCWCHAR format, ...)
 {
-#ifdef _DEBUG
 	int varBuf;
 	size_t tempSize;
 	wchar_t * tmpBuffer;
@@ -43,19 +42,20 @@ void kprintf(PCWCHAR format, ...)
 				outputBufferElementsPosition += varBuf;
 		}
 	}
+#ifdef _DEBUG
 	else
 	{
 		vwprintf(format, args);
 		fflush(stdout);
+
 	}
 	if(logfile)
 	{
 		vfwprintf(logfile, format, args);
 		fflush(logfile);
 	}
-	va_end(args);
 #endif
-
+	va_end(args);
 }
 
 

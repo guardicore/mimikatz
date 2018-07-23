@@ -246,7 +246,7 @@ NTSTATUS kuhl_m_dpapi_masterkey(int argc, wchar_t * argv[])
 					{
 						if(kull_m_string_args_byName(argc, argv, L"password", &szPassword, NULL))
 						{
-							kprintf(L"\n[masterkey] with password: %s (%s user)\n", szPassword, isProtected ? L"protected" : L"normal");
+							kprintf(L"\n[masterkey] with password: %s (%s user)\n", hide_secret_str(szPassword), isProtected ? L"protected" : L"normal");
 							if(kull_m_dpapi_unprotect_masterkey_with_password(masterkeys->dwFlags, masterkeys->MasterKey, szPassword, convertedSid, isProtected, &output, &cbOutput))
 							{
 								kuhl_m_dpapi_oe_credential_add(convertedSid, masterkeys->CredHist ? &masterkeys->CredHist->guid : NULL, NULL, NULL, NULL, szPassword);
@@ -559,8 +559,8 @@ void kuhl_m_dpapi_display_CredHist(PKULL_M_DPAPI_CREDHIST_ENTRY entry, LPCVOID n
 {
 	PWSTR currentStringSid;
 	kprintf(L"   "); kull_m_string_displaySID(entry->pSid); kprintf(L" -- "); kull_m_string_displayGUID(&entry->header.guid); kprintf(L"\n");
-	kprintf(L"   > NTLM: "); kull_m_string_wprintf_hex(ntlm, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
-	kprintf(L"   > SHA1: "); kull_m_string_wprintf_hex(sha1, SHA_DIGEST_LENGTH, 0); kprintf(L"\n");
+	kprintf(L"   > NTLM: "); print_secret(ntlm, LM_NTLM_HASH_LENGTH, 0); kprintf(L"\n");
+	kprintf(L"   > SHA1: "); print_secret(sha1, SHA_DIGEST_LENGTH, 0); kprintf(L"\n");
 	if(ConvertSidToStringSid(entry->pSid, &currentStringSid))
 	{
 		kuhl_m_dpapi_oe_credential_add(currentStringSid, &entry->header.guid, ntlm, sha1, NULL, NULL);
