@@ -6,17 +6,21 @@
 #include "kull_m_output.h"
 
 FILE * logfile = NULL;
+#ifndef MIMIKATZ_W2000_SUPPORT
 wchar_t * outputBuffer = NULL;
 size_t outputBufferElements = 0, outputBufferElementsPosition = 0;
+#endif
 
 void kprintf(PCWCHAR format, ...)
 {
+#ifndef MIMIKATZ_W2000_SUPPORT
 	int varBuf;
 	size_t tempSize;
 	wchar_t * tmpBuffer;
+#endif
 	va_list args;
 	va_start(args, format);
-
+#ifndef MIMIKATZ_W2000_SUPPORT
 	if(outputBuffer)
 	{
 		varBuf = _vscwprintf(format, args);
@@ -43,7 +47,9 @@ void kprintf(PCWCHAR format, ...)
 		}
 	}
 #ifdef _DEBUG
+#ifndef MIMIKATZ_W2000_SUPPORT
 	else
+#endif
 	{
 		vwprintf(format, args);
 		fflush(stdout);

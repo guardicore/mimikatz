@@ -15,10 +15,11 @@
 #include "../modules/kull_m_string.h"
 #include "../modules/kull_m_samlib.h"
 #include "../modules/kull_m_net.h"
-#include "../modules/rpc/kull_m_rpc_drsr.h"
+#include "lsadump/kuhl_m_lsadump_dc.h"
 #include "kuhl_m_lsadump_remote.h"
 #include "kuhl_m_crypto.h"
 #include "dpapi/kuhl_m_dpapi_oe.h"
+#include "sekurlsa/kuhl_m_sekurlsa.h"
 
 #define	SYSKEY_LENGTH	16
 #define	SAM_KEY_DATA_SALT_LENGTH	16
@@ -51,27 +52,6 @@ typedef struct _NTDS_LSA_AUTH_INFORMATIONS {
 	// ...
 } NTDS_LSA_AUTH_INFORMATIONS, *PNTDS_LSA_AUTH_INFORMATIONS;
 
-#pragma pack(push, 1) 
-typedef struct _USER_PROPERTY {
-	USHORT NameLength;
-	USHORT ValueLength;
-	USHORT Reserved;
-	wchar_t PropertyName[ANYSIZE_ARRAY];
-	// PropertyValue in HEX !
-} USER_PROPERTY, *PUSER_PROPERTY;
-
-typedef struct _USER_PROPERTIES {
-	DWORD Reserved1;
-	DWORD Length;
-	USHORT Reserved2;
-	USHORT Reserved3;
-	BYTE Reserved4[96];
-	wchar_t PropertySignature;
-	USHORT PropertyCount;
-	USER_PROPERTY UserProperties[ANYSIZE_ARRAY];
-} USER_PROPERTIES, *PUSER_PROPERTIES;
-#pragma pack(pop)
-
 const KUHL_M kuhl_m_lsadump;
 
 NTSTATUS kuhl_m_lsadump_init();
@@ -84,10 +64,10 @@ NTSTATUS kuhl_m_lsadump_trust(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_lsadump_secretsOrCache(int argc, wchar_t * argv[], BOOL secretsOrCache);
 NTSTATUS kuhl_m_lsadump_bkey(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_lsadump_rpdata(int argc, wchar_t * argv[]);
-NTSTATUS kuhl_m_lsadump_dcsync(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_lsadump_setntlm(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_lsadump_changentlm(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_lsadump_netsync(int argc, wchar_t * argv[]);
+NTSTATUS kuhl_m_lsadump_packages(int argc, wchar_t * argv[]);
 
 BOOL kuhl_m_lsadump_getSids(IN PKULL_M_REGISTRY_HANDLE hSecurity, IN HKEY hPolicyBase, IN LPCWSTR littleKey, IN LPCWSTR prefix);
 BOOL kuhl_m_lsadump_getComputerAndSyskey(IN PKULL_M_REGISTRY_HANDLE hRegistry, IN HKEY hSystemBase, OUT LPBYTE sysKey);
@@ -96,7 +76,7 @@ BOOL kuhl_m_lsadump_getUsersAndSamKey(IN PKULL_M_REGISTRY_HANDLE hRegistry, IN H
 BOOL kuhl_m_lsadump_getCurrentControlSet(PKULL_M_REGISTRY_HANDLE hRegistry, HKEY hSystemBase, PHKEY phCurrentControlSet);
 BOOL kuhl_m_lsadump_getSyskey(PKULL_M_REGISTRY_HANDLE hRegistry, HKEY hLSA, LPBYTE sysKey);
 BOOL kuhl_m_lsadump_getSamKey(PKULL_M_REGISTRY_HANDLE hRegistry, HKEY hAccount, LPCBYTE sysKey, LPBYTE samKey);
-BOOL kuhl_m_lsadump_getHash(PSAM_SENTRY pSamHash, LPCBYTE pStartOfData, LPCBYTE samKey, DWORD rid, BOOL isNtlm);
+BOOL kuhl_m_lsadump_getHash(PSAM_SENTRY pSamHash, LPCBYTE pStartOfData, LPCBYTE samKey, DWORD rid, BOOL isNtlm, BOOL isHistory);
 
 void kuhl_m_lsadump_lsa_user(SAMPR_HANDLE DomainHandle, PSID DomainSid, DWORD rid, PUNICODE_STRING name, PKULL_M_MEMORY_ADDRESS aRemoteThread);
 BOOL kuhl_m_lsadump_lsa_getHandle(PKULL_M_MEMORY_HANDLE * hMemory, DWORD Flags);
@@ -203,8 +183,8 @@ typedef struct _USER_ACCOUNT_V {
 	SAM_ENTRY unk2;
 	SAM_ENTRY LMHash;
 	SAM_ENTRY NTLMHash;
-	SAM_ENTRY unk3;
-	SAM_ENTRY unk4;
+	SAM_ENTRY NTLMHistory;
+	SAM_ENTRY LMHistory;
 	BYTE datas[ANYSIZE_ARRAY];
 } USER_ACCOUNT_V, *PUSER_ACCOUNT_V;
 
@@ -219,7 +199,7 @@ typedef struct _SAM_HASH_AES {
 typedef struct _SAM_HASH {
 	WORD PEKID;
 	WORD Revision;
-	BYTE hash[LM_NTLM_HASH_LENGTH];
+	BYTE data[ANYSIZE_ARRAY];
 } SAM_HASH, *PSAM_HASH;
 
 typedef struct _POL_REVISION {
@@ -287,7 +267,7 @@ typedef struct _MSCACHE_ENTRY {
 	WORD szUserName;
 	WORD szDomainName;
 	WORD szEffectiveName;
-	WORD szfullName;
+	WORD szFullName;
 	WORD szlogonScript;
 	WORD szprofilePath;
 	WORD szhomeDirectory;
@@ -310,11 +290,30 @@ typedef struct _MSCACHE_ENTRY {
 	BYTE enc_data[ANYSIZE_ARRAY];
 } MSCACHE_ENTRY, *PMSCACHE_ENTRY;
 
+typedef struct _MSCACHE_ENTRY_PTR {
+	UNICODE_STRING UserName;
+	UNICODE_STRING Domain;
+	UNICODE_STRING DnsDomainName;
+	UNICODE_STRING Upn;
+	UNICODE_STRING EffectiveName;
+	UNICODE_STRING FullName;
+
+	UNICODE_STRING LogonScript;
+	UNICODE_STRING ProfilePath;
+	UNICODE_STRING HomeDirectory;
+	UNICODE_STRING HomeDirectoryDrive;
+
+	PGROUP_MEMBERSHIP Groups;
+
+	UNICODE_STRING LogonDomainName;
+
+} MSCACHE_ENTRY_PTR, *PMSCACHE_ENTRY_PTR;
+
 typedef struct _MSCACHE_DATA {
 	BYTE mshashdata[LM_NTLM_HASH_LENGTH];
 	BYTE unkhash[LM_NTLM_HASH_LENGTH];
 	DWORD unk0;
-	DWORD unk1;
+	DWORD szSC;
 	DWORD unkLength;
 	DWORD unk2;
 	DWORD unk3;
@@ -324,6 +323,28 @@ typedef struct _MSCACHE_DATA {
 	DWORD unk7;
 	DWORD unk8;
 } MSCACHE_DATA, *PMSCACHE_DATA;
+
+typedef struct _KIWI_ENC_SC_DATA {
+	BYTE toSign[32];
+	BYTE toHash[32];
+	BYTE toDecrypt[ANYSIZE_ARRAY];
+} KIWI_ENC_SC_DATA, *PKIWI_ENC_SC_DATA;
+
+typedef struct _KIWI_ENC_SC_DATA_NEW {
+	BYTE Header[8]; // SuppData
+	DWORD unk0;
+	DWORD unk1;
+	DWORD unk2;
+	DWORD dataSize;
+	KIWI_ENC_SC_DATA data;
+} KIWI_ENC_SC_DATA_NEW, *PKIWI_ENC_SC_DATA_NEW;
+
+typedef struct _NTLM_SUPPLEMENTAL_CREDENTIAL_V4 {
+	ULONG Version;
+	ULONG Flags;
+	ULONG unk;
+	UCHAR NtPassword[LM_NTLM_HASH_LENGTH];
+} NTLM_SUPPLEMENTAL_CREDENTIAL_V4, *PNTLM_SUPPLEMENTAL_CREDENTIAL_V4;
 
 typedef struct _WDIGEST_CREDENTIALS {
 	BYTE	Reserverd1;
@@ -407,6 +428,8 @@ typedef struct _LSA_SUPCREDENTIALS_BUFFERS {
 typedef struct _KUHL_LSADUMP_DCC_CACHE_DATA {
 	LPCWSTR username;
 	BYTE ntlm[LM_NTLM_HASH_LENGTH];
+	HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hProv;
+	DWORD keySpec;
 } KUHL_LSADUMP_DCC_CACHE_DATA, *PKUHL_LSADUMP_DCC_CACHE_DATA;
 
 typedef struct _KIWI_LSA_PRIVATE_DATA {
@@ -430,10 +453,31 @@ typedef struct _KIWI_LSA_PRIVATE_DATA {
 	// LmHistoryArray
 } KIWI_LSA_PRIVATE_DATA, *PKIWI_LSA_PRIVATE_DATA;
 
+typedef struct _TBAL_UNICODE_STRING_F32 {
+	DWORD  Buffer;
+	USHORT Length;
+	USHORT MaximumLength;
+} TBAL_UNICODE_STRING_F32, *PTBAL_UNICODE_STRING_F32;
+
+typedef struct _KIWI_TBAL_MSV {
+	DWORD unk0;
+	DWORD structLen;
+	DWORD flags;
+	DWORD unkD; // why not ?
+	BYTE NtOwfPassword[LM_NTLM_HASH_LENGTH];
+	BYTE LmOwfPassword[LM_NTLM_HASH_LENGTH];
+	BYTE ShaOwPassword[SHA_DIGEST_LENGTH]; 
+	BYTE DPAPIProtected[LM_NTLM_HASH_LENGTH];
+	DWORD unk1;
+	TBAL_UNICODE_STRING_F32 DomainName;
+	TBAL_UNICODE_STRING_F32 UserName;
+} KIWI_TBAL_MSV, *PKIWI_TBAL_MSV;
+
 BOOL kuhl_m_lsadump_getLsaKeyAndSecrets(IN PKULL_M_REGISTRY_HANDLE hSecurity, IN HKEY hSecurityBase, IN PKULL_M_REGISTRY_HANDLE hSystem, IN HKEY hSystemBase, IN LPBYTE sysKey, IN BOOL secretsOrCache, IN PKUHL_LSADUMP_DCC_CACHE_DATA pCacheData);
 BOOL kuhl_m_lsadump_getSecrets(IN PKULL_M_REGISTRY_HANDLE hSecurity, IN HKEY hPolicyBase, IN PKULL_M_REGISTRY_HANDLE hSystem, IN HKEY hSystemBase, PNT6_SYSTEM_KEYS lsaKeysStream, PNT5_SYSTEM_KEY lsaKeyUnique);
 BOOL kuhl_m_lsadump_getNLKMSecretAndCache(IN PKULL_M_REGISTRY_HANDLE hSecurity, IN HKEY hPolicyBase, IN HKEY hSecurityBase, PNT6_SYSTEM_KEYS lsaKeysStream, PNT5_SYSTEM_KEY lsaKeyUnique, IN PKUHL_LSADUMP_DCC_CACHE_DATA pCacheData);
 void kuhl_m_lsadump_printMsCache(PMSCACHE_ENTRY entry, CHAR version);
+BOOL kuhl_m_lsadump_decryptSCCache(PBYTE data, DWORD size, HCRYPTPROV hProv, DWORD keySpec);
 void kuhl_m_lsadump_getInfosFromServiceName(IN PKULL_M_REGISTRY_HANDLE hSystem, IN HKEY hSystemBase, IN PCWSTR serviceName);
 BOOL kuhl_m_lsadump_decryptSecret(IN PKULL_M_REGISTRY_HANDLE hSecurity, IN HKEY hSecret, IN LPCWSTR KeyName, IN PNT6_SYSTEM_KEYS lsaKeysStream, IN PNT5_SYSTEM_KEY lsaKeyUnique, IN PVOID * pBufferOut, IN PDWORD pSzBufferOut);
 void kuhl_m_lsadump_candidateSecret(DWORD szBytesSecrets, PVOID bufferSecret, PCWSTR prefix, PCWSTR secretName);
@@ -442,14 +486,6 @@ BOOL kuhl_m_lsadump_sec_aes256(PNT6_HARD_SECRET hardSecretBlob, DWORD hardSecret
 PKERB_KEY_DATA kuhl_m_lsadump_lsa_keyDataInfo(PVOID base, PKERB_KEY_DATA keys, USHORT Count, PCWSTR title);
 PKERB_KEY_DATA_NEW kuhl_m_lsadump_lsa_keyDataNewInfo(PVOID base, PKERB_KEY_DATA_NEW keys, USHORT Count, PCWSTR title);
 void kuhl_m_lsadump_lsa_DescrBuffer(DWORD type, DWORD rid, PVOID Buffer, DWORD BufferSize);
-
-BOOL kuhl_m_lsadump_dcsync_decrypt(PBYTE encodedData, DWORD encodedDataSize, DWORD rid, LPCWSTR prefix, BOOL isHistory);
-void kuhl_m_lsadump_dcsync_descrObject(SCHEMA_PREFIX_TABLE *prefixTable, ATTRBLOCK *attributes, LPCWSTR szSrcDomain, BOOL someExport);
-void kuhl_m_lsadump_dcsync_descrUser(SCHEMA_PREFIX_TABLE *prefixTable, ATTRBLOCK *attributes);
-void kuhl_m_lsadump_dcsync_descrUserProperties(PUSER_PROPERTIES properties);
-void kuhl_m_lsadump_dcsync_descrTrust(SCHEMA_PREFIX_TABLE *prefixTable, ATTRBLOCK *attributes, LPCWSTR szSrcDomain);
-void kuhl_m_lsadump_dcsync_descrTrustAuthentication(SCHEMA_PREFIX_TABLE *prefixTable, ATTRBLOCK *attributes, PCUNICODE_STRING domain, PCUNICODE_STRING partner, BOOL isIn);
-void kuhl_m_lsadump_dcsync_descrSecret(SCHEMA_PREFIX_TABLE *prefixTable, ATTRBLOCK *attributes, BOOL someExport);
 
 typedef wchar_t * LOGONSRV_HANDLE;
 typedef struct _NETLOGON_CREDENTIAL {

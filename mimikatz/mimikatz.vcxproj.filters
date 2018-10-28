@@ -236,7 +236,51 @@
     <ClCompile Include="modules\crypto\kuhl_m_crypto_extractor.c">
       <Filter>local modules\crypto</Filter>
     </ClCompile>
-    <ClCompile Include="logon_data.c" />
+    <ClCompile Include="modules\lsadump\kuhl_m_lsadump_dc.c">
+      <Filter>local modules\lsadump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_sr98.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_cabinet.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\crypto\kuhl_m_crypto_patch.c">
+      <Filter>local modules\crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\kuhl_m_sr98.c">
+      <Filter>local modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\crypto\kuhl_m_crypto_sc.c">
+      <Filter>local modules\crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_rdm.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\kuhl_m_rdm.c">
+      <Filter>local modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_hid.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_pipe.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\dpapi\packages\kuhl_m_dpapi_ssh.c">
+      <Filter>local modules\dpapi\packages</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_pn532.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\kull_m_acr.c">
+      <Filter>common modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\kuhl_m_acr.c">
+      <Filter>local modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\dpapi\packages\kuhl_m_dpapi_rdg.c">
+      <Filter>local modules\dpapi\packages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mimikatz.h" />
@@ -429,9 +473,6 @@
     <ClInclude Include="modules\kuhl_m_busylight.h">
       <Filter>local modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\modules\kull_m_busylight_hid.h">
-      <Filter>common modules</Filter>
-    </ClInclude>
     <ClInclude Include="modules\dpapi\packages\kuhl_m_dpapi_wlan.h">
       <Filter>local modules\dpapi\packages</Filter>
     </ClInclude>
@@ -492,7 +533,51 @@
     <ClInclude Include="modules\crypto\kuhl_m_crypto_extractor.h">
       <Filter>local modules\crypto</Filter>
     </ClInclude>
-    <ClInclude Include="logon_data.h" />
+    <ClInclude Include="modules\lsadump\kuhl_m_lsadump_dc.h">
+      <Filter>local modules\lsadump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_sr98.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_cabinet.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\crypto\kuhl_m_crypto_patch.h">
+      <Filter>local modules\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\kuhl_m_sr98.h">
+      <Filter>local modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\crypto\kuhl_m_crypto_sc.h">
+      <Filter>local modules\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_rdm.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\kuhl_m_rdm.h">
+      <Filter>local modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_hid.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_pipe.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\dpapi\packages\kuhl_m_dpapi_ssh.h">
+      <Filter>local modules\dpapi\packages</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_pn532.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\kull_m_acr.h">
+      <Filter>common modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\kuhl_m_acr.h">
+      <Filter>local modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\dpapi\packages\kuhl_m_dpapi_rdg.h">
+      <Filter>local modules\dpapi\packages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="local modules">
@@ -526,6 +611,9 @@
     </Filter>
     <Filter Include="local modules\crypto">
       <UniqueIdentifier>{de3bf270-ef33-4d83-bec2-77c4450b411a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="local modules\lsadump">
+      <UniqueIdentifier>{3b2bcf11-3674-4ee4-949c-491c8c5efd34}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
