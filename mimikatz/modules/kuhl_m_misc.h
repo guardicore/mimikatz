@@ -12,6 +12,7 @@
 #include "../modules/kull_m_net.h"
 #include "../modules/kull_m_remotelib.h"
 #include "../modules/kull_m_crypto_system.h"
+#include <fltUser.h>
 
 const KUHL_M kuhl_m_misc;
 
@@ -25,6 +26,9 @@ NTSTATUS kuhl_m_misc_memssp(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_misc_skeleton(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_misc_compressme(int argc, wchar_t * argv[]);
 NTSTATUS kuhl_m_misc_wp(int argc, wchar_t * argv[]);
+NTSTATUS kuhl_m_misc_mflt(int argc, wchar_t * argv[]);
+NTSTATUS kuhl_m_misc_easyntlmchall(int argc, wchar_t * argv[]);
+NTSTATUS kuhl_m_misc_clip(int argc, wchar_t * argv[]);
 
 BOOL CALLBACK kuhl_m_misc_detours_callback_process(PSYSTEM_PROCESS_INFORMATION pSystemProcessInformation, PVOID pvArg);
 BOOL CALLBACK kuhl_m_misc_detours_callback_module(PKULL_M_PROCESS_VERY_BASIC_MODULE_INFORMATION pModuleInformation, PVOID pvArg);
@@ -61,3 +65,7 @@ typedef struct _KIWI_WP_DATA {
 
 BOOL CALLBACK kuhl_m_misc_wp_callback(PSYSTEM_PROCESS_INFORMATION pSystemProcessInformation, PVOID pvArg);
 void kuhl_m_misc_wp_for_pid(DWORD pid, PCWCHAR wp);
+void kuhl_m_misc_mflt_display(PFILTER_AGGREGATE_BASIC_INFORMATION info);
+
+BOOL WINAPI kuhl_misc_clip_WinHandlerRoutine(DWORD dwCtrlType);
+LRESULT APIENTRY kuhl_m_misc_clip_MainWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

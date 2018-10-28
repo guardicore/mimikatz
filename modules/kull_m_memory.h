@@ -8,6 +8,9 @@
 #include "kull_m_minidump.h"
 #include "kull_m_kernel.h"
 
+void * _ReturnAddress(void);
+//#pragma intrinsic(_ReturnAddress)
+
 typedef enum _KULL_M_MEMORY_TYPE
 {
 	KULL_M_MEMORY_TYPE_OWN,
@@ -75,7 +78,7 @@ BOOL kull_m_memory_open(IN KULL_M_MEMORY_TYPE Type, IN HANDLE hAny, OUT PKULL_M_
 PKULL_M_MEMORY_HANDLE kull_m_memory_close(IN PKULL_M_MEMORY_HANDLE hMemory);
 
 BOOL kull_m_memory_alloc(IN PKULL_M_MEMORY_ADDRESS Address, IN SIZE_T Lenght, IN DWORD Protection);
-BOOL kull_m_memory_free(IN PKULL_M_MEMORY_ADDRESS Address, IN SIZE_T Lenght);
+BOOL kull_m_memory_free(IN PKULL_M_MEMORY_ADDRESS Address);
 BOOL kull_m_memory_equal(IN PKULL_M_MEMORY_ADDRESS Address1, IN PKULL_M_MEMORY_ADDRESS Address2, IN SIZE_T Lenght);
 
 #define COMPRESSION_FORMAT_NONE          (0x0000)   // winnt
